@@ -1,10 +1,18 @@
 """Servidor MCP 'tony-estandares'.
 
 Expone en modo de solo lectura las reglas de estándares almacenadas como
-archivos Markdown en la carpeta 'reglas/', mediante el transporte stdio.
+archivos Markdown en la carpeta 'reglas/'.
+
+Por defecto usa el transporte stdio (uso local). Con la variable de entorno
+MCP_TRANSPORT=streamable-http atiende por HTTP en 0.0.0.0 y en el puerto de
+la variable PORT, y exige la cabecera 'Authorization: Bearer <MCP_TOKEN>'.
 """
 
+import hmac
+import json
+import os
 import re
+import sys
 from pathlib import Path
 
 # Requirements 1.1, 1.5, 1.6, 1.7: se usa MCPServer (SDK 2.x) y, si no está
@@ -203,6 +211,88 @@ def buscar_reglas(texto: str) -> list[dict]:
     return resultados
 
 
-# Requirements 1.2, 1.3: al ejecutarse como programa principal, atiende MCP por stdio.
+# --- Modo remoto (HTTP con token bearer) ---------------------------------
+
+RUTA_SALUD = "/health"
+
+
+async def _responder_json(send, estado: int, cuerpo: dict, cabeceras=None) -> None:
+    """Envía una respuesta HTTP con cuerpo JSON en UTF-8."""
+    datos = json.dumps(cuerpo, ensure_ascii=False).encode("utf-8")
+    lista = [
+        (b"content-type", b"application/json; charset=utf-8"),
+        (b"content-length", str(len(datos)).encode()),
+    ]
+    lista.extend(cabeceras or [])
+    await send({"type": "http.response.start", "status": estado, "headers": lista})
+    await send({"type": "http.response.body", "body": datos})
+
+
+class ProteccionToken:
+    """
+    Middleware ASGI que exige 'Authorization: Bearer <token>' en cada
+    petición HTTP, salvo en /health, que responde sin token para el chequeo
+    de salud de la plataforma.
+    """
+
+    def __init__(self, app, token: str):
+        self.app = app
+        self.esperado = f"Bearer {token}".encode("utf-8")
+
+    async def __call__(self, scope, receive, send):
+        # Los eventos lifespan deben llegar a la app para iniciar el gestor de sesiones.
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        if scope.get("path") == RUTA_SALUD:
+            await _responder_json(send, 200, {"estado": "ok"})
+            return
+
+        recibido = dict(scope.get("headers") or []).get(b"authorization", b"")
+        # compare_digest evita filtrar el token por diferencias de tiempo.
+        if not hmac.compare_digest(recibido, self.esperado):
+            await _responder_json(
+                send,
+                401,
+                {"error": "No autorizado: falta el token o no es válido."},
+                [(b"www-authenticate", b"Bearer")],
+            )
+            return
+
+        await self.app(scope, receive, send)
+
+
+def crear_app_http(token: str):
+    """
+    Construye la aplicación ASGI del modo remoto: el endpoint MCP en /mcp
+    (Streamable HTTP, sin estado) protegido por token bearer.
+
+    Requiere el SDK 2.x. Lanza ValueError si el token está vacío.
+    """
+    if not token or not token.strip():
+        raise ValueError("MCP_TOKEN es obligatorio en modo HTTP.")
+    # Sin estado: el plan gratuito reinicia el proceso y no se pierden sesiones.
+    # Con host 0.0.0.0 el SDK no activa la protección DNS rebinding, que
+    # rechazaría el dominio público.
+    app = servidor.streamable_http_app(host="0.0.0.0", stateless_http=True)
+    return ProteccionToken(app, token.strip())
+
+
+def iniciar_http() -> None:
+    """Arranca el modo remoto con uvicorn en 0.0.0.0 y el puerto de PORT."""
+    import uvicorn
+
+    token = os.environ.get("MCP_TOKEN", "")
+    if not token.strip():
+        sys.exit("Error: define la variable de entorno MCP_TOKEN para el modo HTTP.")
+    puerto = int(os.environ.get("PORT", "8000"))
+    uvicorn.run(crear_app_http(token), host="0.0.0.0", port=puerto)
+
+
+# Requirements 1.2, 1.3: sin MCP_TRANSPORT, atiende MCP por stdio como siempre.
 if __name__ == "__main__":
-    servidor.run()
+    if os.environ.get("MCP_TRANSPORT", "stdio").strip().lower() == "streamable-http":
+        iniciar_http()
+    else:
+        servidor.run()

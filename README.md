@@ -1,8 +1,11 @@
 # tony-estandares: servidor MCP de estándares
 
-Servidor MCP escrito en Python que expone, en modo de solo lectura, las reglas de estándares guardadas como archivos Markdown en la carpeta `reglas/`. Usa el transporte stdio y se conecta a Kiro mediante `.kiro/settings/mcp.json`.
+Servidor MCP escrito en Python que expone, en modo de solo lectura, las reglas de estándares guardadas como archivos Markdown en la carpeta `reglas/`. Funciona de dos maneras:
 
-Se probó con la versión 2.3.0 del SDK `mcp` y también funciona con la serie 1.x (`requirements.txt` declara `mcp[cli]>=1.10,<3`).
+- **Local (stdio):** cada persona lo instala y Kiro lo arranca como proceso. Es el modo por defecto.
+- **Remoto (HTTP):** se despliega una vez, por ejemplo en Render, y el equipo se conecta por URL con un token. Ver [Uso remoto en Render](#uso-remoto-en-render).
+
+Se probó con la versión 2.3.0 del SDK `mcp`. El modo local también funciona con la serie 1.x (`requirements.txt` declara `mcp[cli]>=1.10,<3`). El modo remoto requiere el SDK 2.x.
 
 ## Estructura
 
@@ -92,3 +95,78 @@ Manejo de errores (la última línea debe mencionar `ToolError` y el mensaje "La
 ```powershell
 .\.venv\Scripts\python.exe -c "import asyncio, server; asyncio.run(server.servidor.call_tool('obtener_regla', {'nombre': 'no-existe'}))"
 ```
+
+## Uso remoto en Render
+
+Con la variable `MCP_TRANSPORT=streamable-http`, el servidor atiende por HTTP en `0.0.0.0` y en el puerto de la variable `PORT`. Rutas:
+
+- `/mcp`: endpoint MCP (Streamable HTTP, sin estado). Exige la cabecera `Authorization: Bearer <MCP_TOKEN>`; sin ella responde 401.
+- `/health`: responde `{"estado": "ok"}` sin token. Sirve para el chequeo de salud y no expone reglas.
+
+Si `MCP_TOKEN` no está definido, el servidor no arranca en modo HTTP, para que nunca quede público sin protección.
+
+### Crear el servicio
+
+En Render, crea un **Web Service** conectado a este repositorio:
+
+| Campo | Valor |
+|---|---|
+| Language | Python 3 |
+| Branch | `main` |
+| Build Command | `pip install -r requirements.txt` |
+| Start Command | `python server.py` |
+| Instance Type | Free |
+
+Variables de entorno:
+
+| KEY | VALUE |
+|---|---|
+| `MCP_TRANSPORT` | `streamable-http` |
+| `MCP_TOKEN` | un valor largo y aleatorio (botón **Generate**) |
+
+No definas `PORT`: Render la asigna. El token vive solo en Render; no lo subas al repositorio.
+
+Cada push a `main` redespliega el servicio, así que agregar o editar una regla en `reglas/` y hacer push basta para publicarla.
+
+El plan Free se duerme tras un rato sin uso. La primera llamada después de eso puede tardar alrededor de un minuto mientras el servicio despierta.
+
+### Conectar Kiro al servidor remoto
+
+1. Define el token como variable de entorno de usuario en Windows (PowerShell) y reinicia Kiro para que la lea:
+
+   ```powershell
+   [Environment]::SetEnvironmentVariable("TONY_MCP_TOKEN", "<token>", "User")
+   ```
+
+2. Agrega el servidor en `~/.kiro/settings/mcp.json`. Reemplaza la URL por la de tu servicio:
+
+   ```json
+   {
+     "mcpServers": {
+       "tony-estandares-remoto": {
+         "url": "https://mcp-tony.onrender.com/mcp",
+         "headers": { "Authorization": "Bearer ${TONY_MCP_TOKEN}" },
+         "autoApprove": ["listar_reglas", "obtener_regla", "buscar_reglas"]
+       }
+     }
+   }
+   ```
+
+Si también tienes el servidor local, usa nombres distintos (`tony-estandares` y `tony-estandares-remoto`) o desactiva uno con `"disabled": true`.
+
+### Comprobar el servicio
+
+```powershell
+Invoke-RestMethod https://mcp-tony.onrender.com/health
+```
+
+Debe responder `estado: ok`. Una petición a `/mcp` sin token debe responder 401.
+
+### Probar el modo HTTP en local
+
+```powershell
+$env:MCP_TRANSPORT = "streamable-http"; $env:MCP_TOKEN = "token-de-prueba"; $env:PORT = "8000"
+.\.venv\Scripts\python.exe server.py
+```
+
+Este comando sí queda corriendo; detenlo con Ctrl+C. Para volver al modo stdio en esa terminal, borra la variable con `Remove-Item Env:MCP_TRANSPORT`.
