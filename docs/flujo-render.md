@@ -16,6 +16,7 @@
 
 - Una cuenta de GitHub.
 - Una cuenta de Render.
+- Git instalado, porque el ejercicio usa `git clone` y `git pull`.
 - Kiro instalado.
 
 ### Marcadores que verás en la guía
@@ -191,6 +192,8 @@ Cada paso termina con su **Resultado esperado**. Confirma ese resultado antes de
 
 3. **Agrega la entrada `tony-estandares-remoto` en `~/.kiro/settings/mcp.json`.** Ese es el archivo de nivel usuario, y es el único lugar donde debes ponerla. No la pongas en `.kiro/settings/mcp.json` dentro de tu Fork, porque la URL de tu Servicio se subiría al repositorio con tu siguiente push.
 
+   En Windows, el archivo es `C:\Users\<tu-usuario-de-windows>\.kiro\settings\mcp.json`. Si no existe, créalo con el bloque completo.
+
    Pide a tu Kiro el bloque y pégalo tú en el archivo. Kiro no puede escribir en `~/.kiro/settings/`. Reemplaza `<URL_DEL_SERVICIO>` por la URL de tu Servicio. Si el archivo ya tiene otras entradas en `mcpServers`, agrega esta junto a ellas.
 
    ```json
@@ -262,8 +265,10 @@ Cada paso termina con su **Resultado esperado**. Confirma ese resultado antes de
 3. **Pide la regla a Kiro con el nombre exacto de la entrada remota.** Escribe en el chat de Kiro:
 
    ```
-   usa tony-estandares-remoto para obtener esa regla
+   usa tony-estandares-remoto para obtener la regla <nombre-de-la-regla>
    ```
+
+   Reemplaza `<nombre-de-la-regla>` por el nombre de la regla que editaste, sin `.md`. Por ejemplo, si editaste `nombres-de-variables.md`, escribe `nombres-de-variables`.
 
    **Resultado esperado:** Kiro empieza a llamar a la herramienta de `tony-estandares-remoto`.
 
@@ -309,7 +314,7 @@ Si pegaste tu Token en el chat de Kiro, en tu Fork, en un chat grupal o en cualq
 | La primera llamada tarda alrededor de un minuto | El plan Free de Render estaba dormido. Las llamadas siguientes son rápidas. |
 | Render marca el despliegue como fallido aunque el log muestra que el servidor arrancó | El Health Check Path quedó en `/healthz`, que responde 401. Cámbialo a `/health`. |
 | `curl` muestra un error en lugar del código | En Windows PowerShell `curl` es un alias de `Invoke-WebRequest`. Usa `curl.exe`. |
-| Kiro responde la regla sin cambios en la parte c | Render no terminó de redesplegar, o Kiro leyó el disco. Espera el despliegue terminado y pide la regla con "usa tony-estandares-remoto". |
+| Kiro responde la regla sin cambios en la parte c | Render no terminó de redesplegar, o Kiro leyó el disco. Espera el despliegue terminado y pide la regla con "usa tony-estandares-remoto para obtener la regla <nombre-de-la-regla>". |
 | El panel de MCP muestra error al abrir Kiro | El Servicio estaba dormido. Despiértalo con `Invoke-RestMethod <URL_DEL_SERVICIO>/health` y reconecta `tony-estandares-remoto` desde el panel. |
 
 ## 8. Lista de comprobación

@@ -4,7 +4,7 @@ Servidor MCP de solo lectura que expone las reglas de estándares guardadas como
 
 ## Empieza aquí
 
-Requisitos previos: una cuenta de GitHub, una cuenta de Render y Kiro.
+Requisitos previos: una cuenta de GitHub, una cuenta de Render, Git instalado y Kiro.
 
 Haz fork de este repositorio, clónalo y ábrelo en Kiro. Los pasos están en [docs/flujo-render.md](docs/flujo-render.md).
 
