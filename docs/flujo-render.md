@@ -26,7 +26,6 @@
 | `<URL_DEL_SERVICIO>` | La URL de tu Servicio en Render, que Render te muestra al terminar el despliegue. |
 | `<tu-usuario>` | Tu nombre de usuario de GitHub. |
 | `<token>` | El valor de tu Token, que Render genera. Nunca lo escribas en un archivo del repositorio. |
-| `[COMPLETAR: ...]` | Un dato o una captura de pantalla que todavía falta en la guía. |
 
 ## 2. El flujo
 
@@ -73,8 +72,6 @@ Cada paso termina con su **Resultado esperado**. Confirma ese resultado antes de
 
 1. **Haz un Fork del Repositorio** `IsaacMendoza-dv/MCP-Tony` en tu cuenta de GitHub, con el botón **Fork** de la página del repositorio.
 
-   [COMPLETAR: captura del botón Fork en GitHub]
-
    **Resultado esperado:** GitHub te lleva a `https://github.com/<tu-usuario>/MCP-Tony`, tu copia del repositorio.
 
 2. **Clona tu Fork** en tu equipo. Reemplaza `<tu-usuario>` por tu nombre de usuario de GitHub.
@@ -91,8 +88,6 @@ Cada paso termina con su **Resultado esperado**. Confirma ese resultado antes de
 
 4. **Crea un Web Service en Render y autoriza el acceso a GitHub.** En el panel de Render elige **New > Web Service**. La primera vez, Render te pide autorizar su acceso a GitHub para poder ver tu Fork. Autorízalo.
 
-   [COMPLETAR: captura de la conexión con GitHub]
-
    **Resultado esperado:** Render lista tus repositorios de GitHub, entre ellos tu Fork `MCP-Tony`.
 
 5. **Elige tu Fork y llena la configuración** con estos valores:
@@ -107,8 +102,6 @@ Cada paso termina con su **Resultado esperado**. Confirma ese resultado antes de
    | Start Command | `python server.py` |
    | Instance Type | Free |
 
-   [COMPLETAR: captura del formulario de configuración]
-
    **Resultado esperado:** el formulario muestra los valores de la tabla.
 
 6. **Agrega las variables de entorno.** Una variable de entorno es un valor con nombre que Render entrega al programa al arrancarlo, fuera del código.
@@ -120,10 +113,6 @@ Cada paso termina con su **Resultado esperado**. Confirma ese resultado antes de
 
    No definas la variable `PORT`: Render la asigna solo. Guarda el valor de `MCP_TOKEN` en un lugar seguro, porque lo necesitarás en la parte b. Es tu Token, generado para tu Servicio, y no debes usar el de otra persona.
 
-   [COMPLETAR: captura de las variables de entorno, con el valor de MCP_TOKEN oculto]
-
-   Oculta el valor de `MCP_TOKEN` en esta captura.
-
    **Resultado esperado:** el formulario muestra las dos variables, `MCP_TRANSPORT` y `MCP_TOKEN`, y no muestra `PORT`.
 
 7. **Configura el Health Check Path y el Auto-Deploy.** En **Advanced**, escribe `/health` en **Health Check Path**.
@@ -132,13 +121,9 @@ Cada paso termina con su **Resultado esperado**. Confirma ese resultado antes de
 
    Deja **Auto-Deploy** en **On Commit**. Así, cada push a la rama `main` de tu Fork redespliega tu Servicio.
 
-   [COMPLETAR: captura del Health Check Path]
-
    **Resultado esperado:** **Health Check Path** dice `/health` y **Auto-Deploy** dice **On Commit**.
 
 8. **Despliega.** Pulsa **Deploy web service**.
-
-   [COMPLETAR: captura del despliegue terminado]
 
    **Resultado esperado:** el panel de Render muestra el despliegue como terminado y la URL de tu Servicio. En el resto de la guía, esa URL es `<URL_DEL_SERVICIO>`.
 
@@ -185,8 +170,6 @@ Cada paso termina con su **Resultado esperado**. Confirma ese resultado antes de
 2. **Aprueba la variable en Kiro.** Busca 'Mcp Approved Env Vars' en la configuración de Kiro (Ctrl+,) y agrega `TONY_MCP_TOKEN` a la lista.
 
    Sin esa aprobación, Kiro no sustituye `${TONY_MCP_TOKEN}` en el `mcp.json`. Entonces envía la cabecera sin el valor del Token y el Servicio responde 401.
-
-   [COMPLETAR: captura de Mcp Approved Env Vars]
 
    **Resultado esperado:** `TONY_MCP_TOKEN` aparece en la lista de Mcp Approved Env Vars.
 
@@ -240,8 +223,6 @@ Cada paso termina con su **Resultado esperado**. Confirma ese resultado antes de
 
 6. **Comprueba la conexión en el panel de MCP.** Abre el panel de MCP de Kiro y busca `tony-estandares-remoto`.
 
-   [COMPLETAR: captura del panel de MCP con las tres herramientas]
-
    **Resultado esperado:** el panel muestra `tony-estandares-remoto` conectado, con tres herramientas: `listar_reglas`, `obtener_regla` y `buscar_reglas`.
 
 ## 5. Parte c: prueba final
@@ -258,8 +239,6 @@ Cada paso termina con su **Resultado esperado**. Confirma ese resultado antes de
 
 2. **Espera a que Render termine el redespliegue.** Con Auto-Deploy On Commit, tu cambio inicia un despliegue nuevo en Render. El redespliegue terminó cuando el panel de Render muestra ese despliegue como terminado.
 
-   [COMPLETAR: captura del despliegue terminado]
-
    **Resultado esperado:** el panel de Render muestra el despliegue nuevo como terminado.
 
 3. **Pide la regla a Kiro con el nombre exacto de la entrada remota.** Escribe en el chat de Kiro:
@@ -273,8 +252,6 @@ Cada paso termina con su **Resultado esperado**. Confirma ese resultado antes de
    **Resultado esperado:** Kiro empieza a llamar a la herramienta de `tony-estandares-remoto`.
 
 4. **Comprueba la respuesta.** Revisa el chat de Kiro.
-
-   [COMPLETAR: captura del chat con la llamada a la herramienta]
 
    **Resultado esperado:** el chat muestra la llamada a la herramienta `obtener_regla` de `tony-estandares-remoto`, y la respuesta trae el cambio que tu clon local todavía no tiene. Eso prueba que el flujo en línea funciona.
 
